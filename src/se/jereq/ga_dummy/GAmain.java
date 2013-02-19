@@ -12,6 +12,7 @@ import java.io.*;
  */
 public class GAmain 
 {
+	private String filenameBase = "";
     private Vector<Hypothesis> population; //The population of hypotheses
     private CrossoverFunction crossoverFunc;
     private FitnessFunction fitnessFunc;
@@ -49,8 +50,11 @@ public class GAmain
      */
     public void runGA()
     {
+        filenameBase = "GA_" + populationSize + "_" + iterations + "_" + crossoverRate + "_" + mutationRate;
+        
         //Init data files
         initCSV();
+        initPlainFile();
         
         for (int cIteration = 0; cIteration < iterations; cIteration++)
         {
@@ -209,7 +213,7 @@ public class GAmain
     {
         try
         {
-            String filename = "GA_" + populationSize + "_" + iterations + "_" + crossoverRate + "_" + mutationRate + ".csv";
+            String filename = filenameBase + ".csv";
             BufferedWriter writer = new BufferedWriter(new FileWriter(filename, false));
             writer.write("Iteration;WorstFitness;AvgFitness;BestFitness");
             writer.newLine();
@@ -233,7 +237,7 @@ public class GAmain
     {
         try
         {
-            String filename = "GA_" + populationSize + "_" + iterations + "_" + crossoverRate + "_" + mutationRate + ".csv";
+            String filename = filenameBase + ".csv";
             BufferedWriter writer = new BufferedWriter(new FileWriter(filename, true));
             writer.write(cIteration + ";" + worstFitness + ";" + avgFitness + ";" + bestFitness);
             writer.newLine();
@@ -243,6 +247,15 @@ public class GAmain
         {
             ex.printStackTrace();
         }
+    }
+    
+    public void initPlainFile() {
+    	try {
+    		FileWriter f = new FileWriter(filenameBase + ".txt");
+    		f.close();
+    	} catch (Exception ex) {
+    		ex.printStackTrace();
+    	}
     }
     
     /**
@@ -257,7 +270,7 @@ public class GAmain
     {
         try
         {
-            String filename = "GA_" + populationSize + "_" + iterations + "_" + crossoverRate + "_" + mutationRate + ".txt";
+            String filename = filenameBase + ".txt";
             BufferedWriter writer = new BufferedWriter(new FileWriter(filename, true));
             writer.write(cIteration + " " + worstFitness + " " + avgFitness + " " + bestFitness);
             writer.newLine();

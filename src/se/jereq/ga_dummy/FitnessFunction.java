@@ -159,7 +159,6 @@ public class FitnessFunction
     private void initPlainFile() {
     	try {
     		FileWriter f = new FileWriter(PLAIN_FILENAME);
-    		f.write("");
     		f.close();
     	} catch (Exception ex) {
     		ex.printStackTrace();
