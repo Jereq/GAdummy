@@ -14,8 +14,9 @@ import java.io.*;
  */
 public class FitnessFunction
 {
-    public static int RANDOM = 0;
-    public static int TARGET = 1;
+	public static final String PLAIN_FILENAME = "GA_param_diffs.txt";
+    public static final int RANDOM = 0;
+    public static final int TARGET = 1;
     private boolean rndFitness = false;
     
     private int type = TARGET;
@@ -29,19 +30,30 @@ public class FitnessFunction
      */
     public FitnessFunction()
     {
-        if (type == TARGET)
+    	initPlainFile();
+    	
+        targetValues = new int[6];
+        
+        switch (type)
         {
-            targetValues = new int[6];
-            /*for (int i = 0; i < 4; i++)
-            {
-                targetValues[i] = (int)(Math.random() * 128);
-            }*/
+        case TARGET:
             targetValues[0] = 5;
             targetValues[1] = 125;
             targetValues[2] = 64;
             targetValues[3] = 101;
             targetValues[4] = 9;
-            targetValues[5] = 113;  
+            targetValues[5] = 113;
+            break;
+            
+        case RANDOM:
+            for (int i = 0; i < targetValues.length; i++)
+            {
+                targetValues[i] = (int)(Math.random() * 128);
+            }
+        	break;
+        	
+        default:
+        	throw new IllegalStateException("Type is incorrectly set.");
         }
     }
     
@@ -64,7 +76,7 @@ public class FitnessFunction
             int hIndex = 0;
             for (int i = 0; i < targetValues.length; i++)
             {
-                //Convert each block of five bits to an integer value
+                //Convert each block of seven bits to an integer value
                 String binStr = "";
                 for (int j = 0; j < 7; j++)
                 {
@@ -144,22 +156,31 @@ public class FitnessFunction
         saveToGnuplot(cGeneration, diffs);
     }
     
+    private void initPlainFile() {
+    	try {
+    		FileWriter f = new FileWriter(PLAIN_FILENAME);
+    		f.write("");
+    		f.close();
+    	} catch (Exception ex) {
+    		ex.printStackTrace();
+    	}
+    }
+    
     /**
      * Saves parameter fitness data to a Gnuplot data file.
      * 
      * @param cGeneration Current generation
      * @param diffs Fitness per parameter
      */
-    public void saveToGnuplot(int cGeneration, int[] diffs)
+    private void saveToGnuplot(int cGeneration, int[] diffs)
     {
         try
         {
-            String filename = "GA_param_diffs.txt";
-            BufferedWriter writer = new BufferedWriter(new FileWriter(filename, true));
-            String line = cGeneration + " ";
+            BufferedWriter writer = new BufferedWriter(new FileWriter(PLAIN_FILENAME, true));
+            String line = Integer.toString(cGeneration);
             for (int i = 0; i < diffs.length; i++)
             {
-                line += diffs[i] + " ";
+                line += " " + diffs[i];
             }
             writer.write(line);
             writer.newLine();

@@ -25,8 +25,7 @@ public class Hypothesis
         
         for (int i = 0; i < length; i++)
         {
-            int rndNum = (int)(Math.random() * 2);
-            bitstring[i] = rndNum;
+            bitstring[i] = (int)(Math.random() * 2);
         }
     }
     

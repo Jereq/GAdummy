@@ -13,10 +13,9 @@ import java.io.*;
 public class GAmain 
 {
     private Vector<Hypothesis> population; //The population of hypotheses
-    private CrossoverFunction co;
-    private FitnessFunction ff;
+    private CrossoverFunction crossoverFunc;
+    private FitnessFunction fitnessFunc;
     private int[] fitnessValues; //Holds the fitness values from fitness evaluations
-    private int sumFitness;
     private int populationSize = 20; //Size of population = number of hypotheses
     private int hypothesisLength = 42; //Length of the bitstring for a hypothesis
     //private int threshold = -1; //-1 -> no threshold stop value used
@@ -40,8 +39,8 @@ public class GAmain
             population.add(new Hypothesis(hypothesisLength));
         }
         
-        co = new CrossoverFunction(hypothesisLength);
-        ff = new FitnessFunction();
+        crossoverFunc = new CrossoverFunction(hypothesisLength);
+        fitnessFunc = new FitnessFunction();
         fitnessValues = new int[populationSize];
     }
     
@@ -53,57 +52,56 @@ public class GAmain
         //Init data files
         initCSV();
         
-        int cIteration = 0;
-        while (cIteration < iterations)
+        for (int cIteration = 0; cIteration < iterations; cIteration++)
         {
-            System.out.println("Generation " + cIteration);
-            sumFitness = 0;
+            int sumFitness = 0;
             
             //Stats to save
             int avgFitness = 0;
             int bestFitness = -10000;
             int worstFitness = 10000;
-            int bestFindex = -1;
+            int bestFitIndex = -1;
             
             //Calculate fitness values for the whole population
             for (int i = 0; i < populationSize; i++)
             {
-                int f = ff.calculateFitness(population.get(i));
-                fitnessValues[i] = f;
-                sumFitness += f;
+                int newFitness = fitnessFunc.calculateFitness(population.get(i));
+                fitnessValues[i] = newFitness;
+                sumFitness += newFitness;
                 
-                if (f > bestFitness) 
+                if (newFitness > bestFitness) 
                 {
-                    bestFitness = f;
-                    bestFindex = i;
+                    bestFitness = newFitness;
+                    bestFitIndex = i;
                 }
-                if (f < worstFitness) 
+                if (newFitness < worstFitness) 
                 {
-                    worstFitness = f;
+                    worstFitness = newFitness;
                 }
                 
                 if (debug) System.out.println(population.get(i).toString() + ": " + fitnessValues[i]);
             }
-            System.out.println("Best fitness: " + bestFitness);
+            
+            System.out.println("Generation: " + cIteration + ", Best fitness: " + bestFitness);
+            
             avgFitness = (int)((double)sumFitness / (double)populationSize);
             
             //Dump stats to file
             saveToCSV(cIteration, worstFitness, avgFitness, bestFitness);
-            saveToGnuplot(cIteration, worstFitness, avgFitness, bestFitness);
+            saveToPlainFile(cIteration, worstFitness, avgFitness, bestFitness);
             
             //Dump param data diffs
-            ff.saveParamDiffsData(cIteration, population.get(bestFindex));
+            fitnessFunc.saveParamDiffsData(cIteration, population.get(bestFitIndex));
             
             //Generate new population for next iteration
-            genNewPopulation();
-            cIteration++;
+            genNewPopulation(sumFitness);
         }
     }
     
     /**
      * Generates a new GA population by recombination, selection and mutation.
      */
-    public void genNewPopulation()
+    public void genNewPopulation(int sumFitness)
     {
         if (debug) System.out.println("\nNew population");
         Vector<Hypothesis> newPopulation = new Vector<>(20);
@@ -113,11 +111,11 @@ public class GAmain
         if (debug) System.out.println("Crossover: " + crossoverRate + " -> "+ noCo);
         for (int i = 0; i < noCo / 2; i++)
         {
-            Hypothesis h1 = probabilisticSelect();
-            Hypothesis h2 = probabilisticSelect();
-            Hypothesis[] res = co.recombine(h1, h2);
+            Hypothesis h1 = probabilisticSelect(sumFitness);
+            Hypothesis h2 = probabilisticSelect(sumFitness);
+            Hypothesis[] res = crossoverFunc.recombine(h1, h2);
             
-            if (debug) System.out.println(co.toString());
+            if (debug) System.out.println(crossoverFunc.toString());
             if (debug) System.out.println(h1.toString() + "," + h2.toString() + " -> " + res[0].toString() + "," + res[1].toString());
             
             newPopulation.add(res[0]);
@@ -153,7 +151,7 @@ public class GAmain
         if (debug) System.out.println("Selection: " + noSelect);
         for (int i = 0; i < noSelect; i++)
         {
-            Hypothesis h = probabilisticSelect();
+            Hypothesis h = probabilisticSelect(sumFitness);
             
             newPopulation.add(h);
         }
@@ -174,11 +172,11 @@ public class GAmain
     }
     
     /**
-     * Probabilisticy selects a hypothesis from the current generation.
+     * Probabilistically selects a hypothesis from the current generation.
      * 
      * @return The selected hypothesis
      */
-    public Hypothesis probabilisticSelect()
+    public Hypothesis probabilisticSelect(int sumFitness)
     {
         boolean found = false;
         int cIndex = 0;
@@ -255,7 +253,7 @@ public class GAmain
      * @param avgFitness Average fitness this iteration
      * @param bestFitness Best fitness this iteration
      */
-    public void saveToGnuplot(int cIteration, int worstFitness, int avgFitness, int bestFitness)
+    public void saveToPlainFile(int cIteration, int worstFitness, int avgFitness, int bestFitness)
     {
         try
         {
